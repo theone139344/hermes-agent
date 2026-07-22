@@ -11,13 +11,7 @@ import { GlyphSpinner } from '@/components/ui/glyph-spinner'
 import { useI18n } from '@/i18n'
 import { Activity, AlertCircle, Clock, Command, FolderOpen, Hash, Loader2, Terminal } from '@/lib/icons'
 import type { RuntimeReadinessResult } from '@/lib/runtime-readiness'
-import {
-  contextBarLabel,
-  formatCacheFresh,
-  formatStatusCost,
-  LiveDuration,
-  usageContextLabel
-} from '@/lib/statusbar'
+import { contextBarLabel, formatCacheFresh, formatStatusCost, LiveDuration, usageContextLabel } from '@/lib/statusbar'
 import { cn } from '@/lib/utils'
 import { copyFilePath, revealFile } from '@/store/file-actions'
 import { revealFileInTree } from '@/store/layout'
@@ -152,7 +146,10 @@ export function useStatusbarItems({
   const contextBar = useMemo(() => contextBarLabel(currentUsage), [currentUsage])
   // Cache hit% + session $ ride the context chip detail when backend supplies them.
   const cacheLabel = useMemo(() => formatCacheFresh(currentUsage, true), [currentUsage])
-  const costLabel = useMemo(() => formatStatusCost(currentUsage.cost_usd), [currentUsage.cost_usd])
+  // Upstream types currentUsage as a union with a zero-usage literal that lacks
+  // cost_usd; narrow with `in` before reading the optional field.
+  const costUsd = 'cost_usd' in currentUsage ? currentUsage.cost_usd : undefined
+  const costLabel = useMemo(() => formatStatusCost(costUsd), [costUsd])
   const approvalModeItem = useApprovalModeStatusbarItem(activeGatewayProfile, requestGateway)
 
   const gatewayMenuContent = useMemo(

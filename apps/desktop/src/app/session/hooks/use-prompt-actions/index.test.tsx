@@ -614,7 +614,8 @@ describe('usePromptActions submit / queue drain semantics', () => {
       []
 
     const requestGateway = vi.fn(
-      async (method: string) => (method === 'session.resume' ? { session_id: 'rt-session-b' } : {}) as never
+      async (method: string, _params?: { session_id?: string }) =>
+        (method === 'session.resume' ? { session_id: 'rt-session-b' } : {}) as never
     )
 
     let handle: HarnessHandle | null = null
@@ -649,8 +650,7 @@ describe('usePromptActions submit / queue drain semantics', () => {
     // The invariant: the stale foreground runtime never receives the prompt.
     expect(
       requestGateway.mock.calls.every(
-        ([method, params]) =>
-          method !== 'prompt.submit' || (params as { session_id?: string }).session_id !== 'rt-session-a'
+        ([method, params]) => method !== 'prompt.submit' || params?.session_id !== 'rt-session-a'
       )
     ).toBe(true)
     expect(
@@ -662,7 +662,7 @@ describe('usePromptActions submit / queue drain semantics', () => {
     // Same window, but B's runtime binding is already known centrally — the
     // drain should adopt the authoritative binding directly (no resume
     // round-trip) rather than trusting the leftover foreground id.
-    const requestGateway = vi.fn(async () => ({}) as never)
+    const requestGateway = vi.fn(async (_method: string, _params?: { session_id?: string }) => ({}) as never)
 
     let handle: HarnessHandle | null = null
     render(
@@ -692,8 +692,7 @@ describe('usePromptActions submit / queue drain semantics', () => {
     expect(requestGateway).not.toHaveBeenCalledWith('session.resume', expect.anything())
     expect(
       requestGateway.mock.calls.every(
-        ([method, params]) =>
-          method !== 'prompt.submit' || (params as { session_id?: string }).session_id !== 'rt-session-a'
+        ([method, params]) => method !== 'prompt.submit' || params?.session_id !== 'rt-session-a'
       )
     ).toBe(true)
   })
