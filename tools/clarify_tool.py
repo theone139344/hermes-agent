@@ -106,10 +106,31 @@ def clarify_tool(
             ensure_ascii=False,
         )
 
+    # Non-skippable: empty / whitespace-only is not a valid answer. Callers
+    # that cancel mid-prompt should return an explicit cancel sentence (CLI
+    # interrupt does); bare "" used to mean "Skip" and let the agent proceed
+    # without a real decision — that path is closed.
+    answer = "" if user_response is None else str(user_response).strip()
+    if not answer:
+        return json.dumps(
+            {
+                "error": (
+                    "Clarify requires a non-empty answer (skip is disabled). "
+                    "Re-call clarify and wait for the user to pick a choice "
+                    "or type Other — do not invent a default silently."
+                ),
+                "question": question,
+                "choices_offered": choices,
+                "user_response": None,
+                "skipped": False,
+            },
+            ensure_ascii=False,
+        )
+
     return json.dumps({
         "question": question,
         "choices_offered": choices,
-        "user_response": str(user_response).strip(),
+        "user_response": answer,
     }, ensure_ascii=False)
 
 

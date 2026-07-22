@@ -69,11 +69,24 @@ describe('readClarifyResult', () => {
     })
   })
 
-  it('keeps an empty user_response so Skip can render as skipped', () => {
+  it('keeps empty user_response as empty string (legacy payloads; Skip UI removed)', () => {
     expect(readClarifyResult({ question: 'Ok?', user_response: '' })).toEqual({
       question: 'Ok?',
       answer: '',
       error: undefined
+    })
+  })
+
+  it('surfaces gateway/tool error when skip is rejected', () => {
+    expect(
+      readClarifyResult({
+        question: 'Ok?',
+        error: 'Clarify requires a non-empty answer (skip is disabled).'
+      })
+    ).toEqual({
+      question: 'Ok?',
+      answer: undefined,
+      error: 'Clarify requires a non-empty answer (skip is disabled).'
     })
   })
 })
@@ -100,18 +113,21 @@ describe('ClarifyTool settled view', () => {
     expect(document.querySelector('[data-clarify-answer]')?.textContent).toBe('staging')
   })
 
-  it('labels an empty response as Skipped', () => {
+  it('shows error text when empty skip was rejected', () => {
     renderClarify(
       <ClarifyTool
         {...settledClarifyProps(
           { question: 'Anything else?' },
-          { question: 'Anything else?', user_response: '' },
+          {
+            question: 'Anything else?',
+            error: 'Clarify requires a non-empty answer (skip is disabled).'
+          },
           'clarify-2'
         )}
       />
     )
 
     expect(screen.getByText('Anything else?')).toBeTruthy()
-    expect(screen.getByText('Skipped')).toBeTruthy()
+    expect(screen.getByText('Clarify requires a non-empty answer (skip is disabled).')).toBeTruthy()
   })
 })

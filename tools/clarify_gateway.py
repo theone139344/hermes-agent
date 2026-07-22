@@ -160,13 +160,20 @@ def resolve_gateway_clarify(clarify_id: str, response: str) -> bool:
     """Unblock the agent thread waiting on ``clarify_id``.
 
     Returns True if an entry was found and resolved, False otherwise
-    (already resolved, expired, or never existed).
+    (already resolved, expired, never existed, or empty skip rejected).
+
+    Empty / whitespace-only answers are rejected so messaging adapters
+    cannot silently Skip the same way the Desktop Skip button used to.
+    Session teardown should call ``cancel_pending_for_session`` instead.
     """
+    answer = "" if response is None else str(response).strip()
+    if not answer:
+        return False
     with _lock:
         entry = _entries.get(clarify_id)
         if entry is None:
             return False
-    entry.response = str(response) if response is not None else ""
+    entry.response = answer
     entry.event.set()
     return True
 
