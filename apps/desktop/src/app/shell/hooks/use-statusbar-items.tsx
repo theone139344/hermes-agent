@@ -11,7 +11,13 @@ import { GlyphSpinner } from '@/components/ui/glyph-spinner'
 import { useI18n } from '@/i18n'
 import { Activity, AlertCircle, Clock, Command, FolderOpen, Hash, Loader2, Terminal } from '@/lib/icons'
 import type { RuntimeReadinessResult } from '@/lib/runtime-readiness'
-import { contextBarLabel, LiveDuration, usageContextLabel } from '@/lib/statusbar'
+import {
+  contextBarLabel,
+  formatCacheFresh,
+  formatStatusCost,
+  LiveDuration,
+  usageContextLabel
+} from '@/lib/statusbar'
 import { cn } from '@/lib/utils'
 import { copyFilePath, revealFile } from '@/store/file-actions'
 import { revealFileInTree } from '@/store/layout'
@@ -144,6 +150,9 @@ export function useStatusbarItems({
 
   const contextUsage = useMemo(() => usageContextLabel(currentUsage), [currentUsage])
   const contextBar = useMemo(() => contextBarLabel(currentUsage), [currentUsage])
+  // Cache hit% + session $ ride the context chip detail when backend supplies them.
+  const cacheLabel = useMemo(() => formatCacheFresh(currentUsage, true), [currentUsage])
+  const costLabel = useMemo(() => formatStatusCost(currentUsage.cost_usd), [currentUsage.cost_usd])
   const approvalModeItem = useApprovalModeStatusbarItem(activeGatewayProfile, requestGateway)
 
   const gatewayMenuContent = useMemo(
@@ -448,10 +457,13 @@ export function useStatusbarItems({
         variant: 'text'
       },
       {
-        detail: contextBar || undefined,
-        hidden: !contextUsage,
+        // Prefer bar+%; cache/cost ride on detail when backend provides them.
+        detail:
+          [contextBar || undefined, cacheLabel || undefined, costLabel || undefined].filter(Boolean).join(' · ') ||
+          undefined,
+        hidden: !contextUsage && !cacheLabel && !costLabel,
         id: 'context-usage',
-        label: contextUsage,
+        label: contextUsage || copy.contextUsage || 'ctx',
         menuAlign: 'end',
         menuClassName: 'w-auto border-(--ui-stroke-secondary) p-0',
         menuContent: (
@@ -490,11 +502,13 @@ export function useStatusbarItems({
       approvalModeItem,
       backendVersionItem,
       busy,
+      cacheLabel,
       chatOpen,
       clientVersionItem,
       contextBar,
       contextUsage,
       copy,
+      costLabel,
       currentUsage,
       requestGateway,
       sessionStartedAt,
