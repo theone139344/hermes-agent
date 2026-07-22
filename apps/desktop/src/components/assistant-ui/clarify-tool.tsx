@@ -436,7 +436,9 @@ function ClarifyToolPending({ args }: ToolCallMessagePartProps) {
         )}
 
         <div className="flex items-center justify-end gap-1">
-          {/* Skip removed: clarify is non-skippable — user must pick a choice or type Other. */}
+          <Button disabled={submitting} onClick={() => void respond('')} size="xs" type="button" variant="text">
+            {copy.skip}
+          </Button>
           <Button disabled={submitting || !pendingAnswer} size="xs" type="submit">
             {submitting ? (
               <Loader2 className="size-3 animate-spin" />

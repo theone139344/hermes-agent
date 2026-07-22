@@ -11291,12 +11291,8 @@ def _(rid, params: dict) -> dict:
 # ── Methods: respond ─────────────────────────────────────────────────
 
 
-def _respond(rid, params, key, *, allow_expired=False, require_nonempty=False):
+def _respond(rid, params, key, *, allow_expired=False):
     r = params.get("request_id", "")
-    raw = params.get(key, "")
-    if require_nonempty and not str(raw if raw is not None else "").strip():
-        # Non-skippable clarify: empty answer must not unblock the agent.
-        return _err(rid, 4003, f"{key} is required (clarify cannot be skipped)")
     with _prompt_lock:
         entry = _pending.get(r)
         if not entry:
@@ -11304,14 +11300,14 @@ def _respond(rid, params, key, *, allow_expired=False, require_nonempty=False):
                 return _ok(rid, {"status": "expired"})
             return _err(rid, 4009, f"no pending {key} request")
         _, ev = entry
-        _answers[r] = raw if raw is not None else ""
+        _answers[r] = params.get(key, "")
         ev.set()
     return _ok(rid, {"status": "ok"})
 
 
 @method("clarify.respond")
 def _(rid, params: dict) -> dict:
-    return _respond(rid, params, "answer", require_nonempty=True)
+    return _respond(rid, params, "answer")
 
 
 @method("terminal.read.respond")
