@@ -149,7 +149,12 @@ export function useStatusbarItems({
   // Upstream types currentUsage as a union with a zero-usage literal that lacks
   // cost_usd; narrow with `in` before reading the optional field.
   const costUsd = 'cost_usd' in currentUsage ? currentUsage.cost_usd : undefined
-  const costLabel = useMemo(() => formatStatusCost(costUsd), [costUsd])
+  const costStatus =
+    'cost_status' in currentUsage ? currentUsage.cost_status : undefined
+  const costLabel = useMemo(
+    () => formatStatusCost(costUsd, costStatus),
+    [costUsd, costStatus]
+  )
   const approvalModeItem = useApprovalModeStatusbarItem(activeGatewayProfile, requestGateway)
 
   const gatewayMenuContent = useMemo(

@@ -110,21 +110,28 @@ export function formatCacheFresh(usage: UsageStats, compact = false): string {
   return pieces.join(' ')
 }
 
-/** Claude-like dollar amount; empty when cost is missing or non-positive. */
-export function formatStatusCost(usd?: number): string {
+/**
+ * Claude-like dollar amount; empty when cost is missing or non-positive.
+ * Prefix with ~ when backend marks the figure as estimated (not provider invoice).
+ */
+export function formatStatusCost(usd?: number, status?: string): string {
   if (usd == null || !Number.isFinite(usd) || usd <= 0) {
     return ''
   }
 
+  let body: string
   if (usd < 0.01) {
-    return '<$0.01'
+    body = '<$0.01'
+  } else if (usd < 10) {
+    body = `$${usd.toFixed(2)}`
+  } else {
+    body = `$${Number(usd.toFixed(3))}`
   }
 
-  if (usd < 10) {
-    return `$${usd.toFixed(2)}`
+  if (status === 'estimated') {
+    return body.startsWith('<') ? `~${body}` : `~${body}`
   }
-
-  return `$${Number(usd.toFixed(3))}`
+  return body
 }
 
 export function LiveDuration({ since }: { since: number | null | undefined }) {

@@ -66,5 +66,10 @@ describe('statusbar cache + cost helpers', () => {
       expect(formatStatusCost(1.2)).toBe('$1.20')
       expect(formatStatusCost(127.093)).toBe('$127.093')
     })
+
+    it('marks estimated costs with a tilde', () => {
+      expect(formatStatusCost(1.2, 'estimated')).toBe('~$1.20')
+      expect(formatStatusCost(0.004, 'estimated')).toBe('~<$0.01')
+    })
   })
 })
